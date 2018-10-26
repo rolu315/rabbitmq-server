@@ -87,6 +87,22 @@
          (?is_amqqueue_v1(Q0) andalso ?is_amqqueue_v1(Q1) andalso
           ?amqqueue_v1_field_pid(Q0) =:= ?amqqueue_v1_field_pid(Q1)))).
 
+-define(amqqueue_field_name(Q),
+        case ?is_amqqueue_v2(Q) of
+            true  -> ?amqqueue_v2_field_name(Q);
+            false -> case ?is_amqqueue_v1(Q) of
+                         true -> ?amqqueue_v1_field_name(Q)
+                     end
+        end).
+
+-define(amqqueue_field_pid(Q),
+        case ?is_amqqueue_v2(Q) of
+            true  -> ?amqqueue_v2_field_pid(Q);
+            false -> case ?is_amqqueue_v1(Q) of
+                         true -> ?amqqueue_v1_field_pid(Q)
+                     end
+        end).
+
 -define(amqqueue_v1_vhost(Q), element(2, ?amqqueue_v1_field_name(Q))).
 -define(amqqueue_v2_vhost(Q), element(2, ?amqqueue_v2_field_name(Q))).
 

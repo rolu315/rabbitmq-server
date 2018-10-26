@@ -18,6 +18,7 @@
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
+-include("include/amqqueue.hrl").
 
 -compile(export_all).
 
@@ -226,8 +227,8 @@ declare_on_dead_queue1(_Config, SecondaryNode) ->
     Pid = spawn(SecondaryNode,
                 fun () ->
                         {new, Q} = rabbit_amqqueue:declare(QueueName, false, false, [], none, <<"acting-user">>),
-                        QueueName = amqqueue:get_name(Q),
-                        QPid = amqqueue:get_pid(Q),
+                        QueueName = ?amqqueue_field_name(Q),
+                        QPid = ?amqqueue_field_pid(Q),
                         exit(QPid, kill),
                         Self ! {self(), killed, QPid}
                 end),
@@ -270,7 +271,7 @@ must_exit(Fun) ->
 
 dead_queue_loop(QueueName, OldPid) ->
     {existing, Q} = rabbit_amqqueue:declare(QueueName, false, false, [], none, <<"acting-user">>),
-    QPid = amqqueue:get_pid(Q),
+    QPid = ?amqqueue_field_pid(Q),
     case QPid of
         OldPid -> timer:sleep(25),
                   dead_queue_loop(QueueName, OldPid);
