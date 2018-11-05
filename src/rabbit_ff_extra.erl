@@ -20,6 +20,16 @@
          info/2,
          cli_info/0]).
 
+-type cli_info() :: [cli_info_entry()].
+-type cli_info_entry() :: [{name, rabbit_feature_flags:feature_name()} |
+                           {enabled, boolean()} |
+                           {supported, boolean()} |
+                           {stability, boolean()} |
+                           {provided_by, atom()} |
+                           {desc, string()}].
+
+-spec info(non_neg_integer()) -> ok.
+
 info(Verbosity) ->
     %% Two tables: one for stable feature flags, one for experimental ones.
     StableFF = rabbit_feature_flags:list(all, stable),
@@ -44,6 +54,8 @@ info(Verbosity) ->
         0 -> ok;
         _ -> state_legend()
     end.
+
+-spec info(rabbit_feature_flags:feature_flags(), non_neg_integer()) -> ok.
 
 info(FeatureFlags, Verbosity) ->
     %% Table columns:
@@ -165,8 +177,12 @@ state_legend() ->
        ascii_color(yellow), ascii_color(default),
        ascii_color(red_bg), ascii_color(default)]).
 
+-spec cli_info() -> cli_info().
+
 cli_info() ->
     cli_info(rabbit_feature_flags:list(all)).
+
+-spec cli_info(rabbit_feature_flags:feature_flags()) -> cli_info().
 
 cli_info(FeatureFlags) ->
     maps:fold(
@@ -188,9 +204,12 @@ cli_info(FeatureFlags) ->
               [FFInfo | Acc]
       end, [], FeatureFlags).
 
+-type color() :: default | bright_white | red_bg | green | yellow.
+
+-spec ascii_color(color()) -> string().
+
 ascii_color(default)      -> "\033[0m";
 ascii_color(bright_white) -> "\033[1m";
-ascii_color(red)          -> "\033[31m";
 ascii_color(red_bg)       -> "\033[1;37;41m";
 ascii_color(green)        -> "\033[32m";
 ascii_color(yellow)       -> "\033[33m".

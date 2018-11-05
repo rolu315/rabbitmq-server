@@ -20,13 +20,19 @@
          is_supported/1,
          is_enabled/1]).
 
+-spec list(all | enabled | disabled) -> rabbit_feature_flags:feature_flags().
+
 list(Arg) ->
     rabbit_feature_flags:initialize_registry(),
     ?MODULE:list(Arg).
 
+-spec is_supported(rabbit_feature_flags:feature_name()) -> boolean().
+
 is_supported(Arg) ->
     rabbit_feature_flags:initialize_registry(),
     ?MODULE:is_supported(Arg).
+
+-spec is_enabled(rabbit_feature_flags:feature_name()) -> boolean() | state_changing.
 
 is_enabled(Arg) ->
     rabbit_feature_flags:initialize_registry(),

@@ -59,13 +59,32 @@
 -define(FF_REGISTRY_LOADING_LOCK, {feature_flags_registry_loading, self()}).
 -define(FF_STATE_CHANGE_LOCK,     {feature_flags_state_change, self()}).
 
+-type feature_flags() :: #{feature_name() => feature_props()}.
+-type feature_name() :: atom().
+-type feature_props() :: #{desc => string(),
+                           stability => stability(),
+                           migration_fun => migration_fun()}.
+-type stability() :: stable | experimental.
+-type migration_fun() :: fun((feature_name(), feature_props(), enable)
+                             -> ok | {error, any()}).
+
+-export_type([feature_name/0,
+              feature_props/0,
+              feature_flags/0,
+              stability/0,
+              migration_fun/0]).
+
 list() -> list(all).
+
+-spec list(all | enabled | disabled) -> feature_flags().
 
 list(all)      -> rabbit_ff_registry:list(all);
 list(enabled)  -> rabbit_ff_registry:list(enabled);
 list(disabled) -> maps:filter(
                     fun(FeatureName, _) -> is_disabled(FeatureName) end,
                     list(all)).
+
+-spec list(all | enabled | disabled, stability()) -> feature_flags().
 
 list(Which, Stability)
   when Stability =:= stable orelse Stability =:= experimental ->
@@ -75,6 +94,8 @@ list(Which, Stability)
                             _         -> false
                         end
                 end, list(Which)).
+
+-spec enable(feature_name() | [feature_name()]) -> ok | {error, any()}.
 
 enable(FeatureName) when is_atom(FeatureName) ->
     rabbit_log:debug("Feature flag `~s`: REQUEST TO ENABLE",
@@ -105,16 +126,26 @@ enable(FeatureName) when is_atom(FeatureName) ->
 enable(FeatureNames) when is_list(FeatureNames) ->
     with_feature_flags(FeatureNames, fun enable/1).
 
+-spec enable_all() -> ok | {error, any()}.
+
 enable_all() ->
     with_feature_flags(maps:keys(list(all)), fun enable/1).
+
+-spec disable(feature_name() | [feature_name()]) -> ok | {error, any()}.
 
 disable(FeatureName) when is_atom(FeatureName) ->
     {error, unsupported};
 disable(FeatureNames) when is_list(FeatureNames) ->
     with_feature_flags(FeatureNames, fun disable/1).
 
+-spec disable_all() -> ok | {error, any()}.
+
 disable_all() ->
     with_feature_flags(maps:keys(list(all)), fun disable/1).
+
+-spec with_feature_flags([feature_name()],
+                         fun((feature_name()) -> ok | {error, any()})) ->
+    ok | {error, any()}.
 
 with_feature_flags([FeatureName | Rest], Fun) ->
     case Fun(FeatureName) of
@@ -124,28 +155,44 @@ with_feature_flags([FeatureName | Rest], Fun) ->
 with_feature_flags([], _) ->
     ok.
 
+-spec is_supported(feature_name()) -> boolean().
+
 is_supported(FeatureName) when is_atom(FeatureName) ->
     is_supported_locally(FeatureName) andalso
     is_supported_remotely(FeatureName).
 
+-spec is_supported_locally(feature_name()) -> boolean().
+
 is_supported_locally(FeatureName) when is_atom(FeatureName) ->
     rabbit_ff_registry:is_supported(FeatureName).
+
+-spec is_supported_remotely(feature_name()) -> boolean().
 
 is_supported_remotely(FeatureName) ->
     is_supported_remotely(FeatureName, ?TIMEOUT).
 
+-spec is_supported_remotely(feature_name(), timeout()) -> boolean().
+
 is_supported_remotely(FeatureName, Timeout) ->
     are_supported_remotely([FeatureName], Timeout).
+
+-spec are_supported([feature_name()]) -> boolean().
 
 are_supported(FeatureNames) when is_list(FeatureNames) ->
     are_supported_locally(FeatureNames) andalso
     are_supported_remotely(FeatureNames).
 
+-spec are_supported_locally([feature_name()]) -> boolean().
+
 are_supported_locally(FeatureNames) when is_list(FeatureNames) ->
     lists:all(fun(F) -> is_supported_locally(F) end, FeatureNames).
 
+-spec are_supported_remotely([feature_name()]) -> boolean().
+
 are_supported_remotely(FeatureNames) when is_list(FeatureNames) ->
     are_supported_remotely(FeatureNames, ?TIMEOUT).
+
+-spec are_supported_remotely([feature_name()], timeout()) -> boolean().
 
 are_supported_remotely([], _) ->
     rabbit_log:debug("Feature flags: skipping query for feature flags "
@@ -187,8 +234,14 @@ are_supported_remotely([], FeatureNames, _) ->
                     [FeatureNames]),
     true.
 
+-spec is_enabled(feature_name()) -> boolean().
+
 is_enabled(FeatureName) when is_atom(FeatureName) ->
     is_enabled(FeatureName, blocking).
+
+-spec is_enabled
+(feature_name(), blocking) -> boolean();
+(feature_name(), non_blocking) -> boolean() | state_changing.
 
 is_enabled(FeatureName, non_blocking) ->
     rabbit_ff_registry:is_enabled(FeatureName);
@@ -202,8 +255,14 @@ is_enabled(FeatureName, blocking) ->
             IsEnabled
     end.
 
+-spec is_disabled(feature_name()) -> boolean().
+
 is_disabled(FeatureName) when is_atom(FeatureName) ->
     is_disabled(FeatureName, blocking).
+
+-spec is_disabled
+(feature_name(), blocking) -> boolean();
+(feature_name(), non_blocking) -> boolean() | state_changing.
 
 is_disabled(FeatureName, Blocking) ->
     case is_enabled(FeatureName, Blocking) of
@@ -211,8 +270,12 @@ is_disabled(FeatureName, Blocking) ->
         IsEnabled      -> not IsEnabled
     end.
 
+-spec info() -> ok.
+
 info() ->
     info(0).
+
+-spec info(non_neg_integer()) -> ok.
 
 info(Verbosity) ->
     rabbit_ff_extra:info(Verbosity).
