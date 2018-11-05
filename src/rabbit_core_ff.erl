@@ -24,11 +24,6 @@
       stability     => experimental,
       migration_fun => {?MODULE, quorum_queue_migration}
      }}).
--rabbit_feature_flag(
-   {empty_basic_get_metric,
-    #{desc          => "Count AMQP `basic.get` on empty queues in stats",
-      stability     => stable
-     }}).
 
 quorum_queue_migration(FeatureName, _FeatureProps, enable) ->
     Tables = [rabbit_queue,
