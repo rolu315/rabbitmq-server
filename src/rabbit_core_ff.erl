@@ -21,7 +21,7 @@
 -rabbit_feature_flag(
    {quorum_queue,
     #{desc          => "Support queues of type `quorum`",
-      stability     => experimental,
+      stability     => stable,
       migration_fun => {?MODULE, quorum_queue_migration}
      }}).
 
