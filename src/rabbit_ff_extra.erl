@@ -14,15 +14,14 @@
 %% Copyright (c) 2018 Pivotal Software, Inc.  All rights reserved.
 %%
 
--module(rabbit_feature_flags_extra).
+-module(rabbit_ff_extra).
 
--export([info/0,
-         info/1,
+-export([info/1,
+         info/2,
          cli_info/0]).
 
-info() ->
+info(Verbosity) ->
     %% Two tables: one for stable feature flags, one for experimental ones.
-
     StableFF = rabbit_feature_flags:list(all, stable),
     case maps:size(StableFF) of
         0 ->
@@ -30,7 +29,7 @@ info() ->
         _ ->
             io:format("~n~s## Stable feature flags:~s~n",
                       [ascii_color(bright_white), ascii_color(default)]),
-            info(StableFF)
+            info(StableFF, Verbosity)
     end,
     ExpFF = rabbit_feature_flags:list(all, experimental),
     case maps:size(ExpFF) of
@@ -39,10 +38,14 @@ info() ->
         _ ->
             io:format("~n~s## Experimental feature flags:~s~n",
                       [ascii_color(bright_white), ascii_color(default)]),
-            info(ExpFF)
+            info(ExpFF, Verbosity)
+    end,
+    case maps:size(StableFF) + maps:size(ExpFF) of
+        0 -> ok;
+        _ -> state_legend()
     end.
 
-info(FeatureFlags) ->
+info(FeatureFlags, Verbosity) ->
     %% Table columns:
     %% Name | State | Application | Description.
     %%   State = Enabled | Disabled | Unavailable (if a node doesn't
@@ -75,8 +78,10 @@ info(FeatureFlags) ->
     HeaderLength = string:length(Header),
     HeaderBorder = string:chars($-, HeaderLength, "\n"),
 
+    % Table header.
     io:format("~n~s~s", [Header, HeaderBorder]),
 
+    % Table content.
     maps:fold(
       fun(FeatureName, FeatureProps, Acc) ->
               IsEnabled = rabbit_feature_flags:is_enabled(FeatureName),
@@ -86,8 +91,10 @@ info(FeatureFlags) ->
                                             {"Enabled", green};
                                         false ->
                                             case IsSupported of
-                                                true  -> {"Disabled", yellow};
-                                                false -> {"Unavailable", red}
+                                                true ->
+                                                    {"Disabled", yellow};
+                                                false ->
+                                                    {"Unavailable", red_bg}
                                             end
                                     end,
               App = maps:get(provided_by, FeatureProps),
@@ -100,10 +107,63 @@ info(FeatureFlags) ->
                  App,
                  Desc,
                  ""]),
+              VerboseFun = fun(Node) ->
+                                   Supported =
+                                     rabbit_feature_flags:does_node_support(
+                                       Node, [FeatureName], 60000),
+                                   Label = case Supported of
+                                               true ->
+                                                   ascii_color(green) ++
+                                                   "supported" ++
+                                                   ascii_color(default);
+                                               false ->
+                                                   ascii_color(red_bg) ++
+                                                   "unsupported" ++
+                                                   ascii_color(default)
+                                           end,
+                                   NodeDesc = io_lib:format("~s: ~s",
+                                                            [Node, Label]),
+                                   io:format(
+                                     FormatString,
+                                     ["",
+                                      "", "", "",
+                                      "", "", "",
+                                      "",
+                                      "  " ++ NodeDesc,
+                                      ""])
+                           end,
+              if
+                  Verbosity > 0 ->
+                      case State of
+                          "Unavailable" ->
+                              Nodes = lists:sort(
+                                        [node() |
+                                         rabbit_feature_flags:remote_nodes()]),
+                              lists:foreach(VerboseFun, Nodes);
+                          _ ->
+                              ok
+                      end,
+                      io:format("~s", [HeaderBorder]),
+                      ok;
+                  true ->
+                      ok
+              end,
               Acc
       end, ok, FeatureFlags),
     io:format("~n", []),
     ok.
+
+state_legend() ->
+    io:format(
+      "~n"
+      "Possible states:~n"
+      "      ~sEnabled~s: The feature flag is enabled on all nodes~n"
+      "     ~sDisabled~s: The feature flag is disabled on all nodes~n"
+      "  ~sUnavailable~s: The feature flag cannot be enabled because one or more nodes do not support it~n"
+      "~n",
+      [ascii_color(green), ascii_color(default),
+       ascii_color(yellow), ascii_color(default),
+       ascii_color(red_bg), ascii_color(default)]).
 
 cli_info() ->
     cli_info(rabbit_feature_flags:list(all)).
@@ -131,5 +191,6 @@ cli_info(FeatureFlags) ->
 ascii_color(default)      -> "\033[0m";
 ascii_color(bright_white) -> "\033[1m";
 ascii_color(red)          -> "\033[31m";
+ascii_color(red_bg)       -> "\033[1;37;41m";
 ascii_color(green)        -> "\033[32m";
 ascii_color(yellow)       -> "\033[33m".

@@ -36,6 +36,7 @@
          is_disabled/1,
          is_disabled/2,
          info/0,
+         info/1,
          init/0,
          check_node_compatibility/1,
          check_node_compatibility/2,
@@ -47,7 +48,10 @@
 
 %% Internal use only.
 -export([initialize_registry/0,
-         mark_as_enabled_locally/1]).
+         mark_as_enabled_locally/1,
+         remote_nodes/0,
+         running_remote_nodes/0,
+         does_node_support/3]).
 
 %% Default timeout for operations on remote nodes.
 -define(TIMEOUT, 60000).
@@ -208,7 +212,10 @@ is_disabled(FeatureName, Blocking) ->
     end.
 
 info() ->
-    rabbit_feature_flags_extra:info().
+    info(0).
+
+info(Verbosity) ->
+    rabbit_ff_extra:info(Verbosity).
 
 %% -------------------------------------------------------------------
 %% Feature flags registry.
