@@ -16,9 +16,17 @@
 
 -module(rabbit_ff_registry).
 
--export([list/1,
+-export([get/1,
+         list/1,
          is_supported/1,
          is_enabled/1]).
+
+-spec get(rabbit_feature_flags:feature_name()) ->
+    rabbit_feature_flags:feature_props().
+
+get(Arg) ->
+    rabbit_feature_flags:initialize_registry(),
+    ?MODULE:get(Arg).
 
 -spec list(all | enabled | disabled) -> rabbit_feature_flags:feature_flags().
 

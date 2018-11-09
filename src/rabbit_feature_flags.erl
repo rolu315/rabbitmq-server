@@ -359,6 +359,22 @@ regen_registry_mod(AllFeatureFlags,
                    ]
                   ),
     ExportForm = erl_syntax:revert(ExportAttr),
+    %% get(_) -> ...
+    GetClauses = [erl_syntax:clause(
+                    [erl_syntax:atom(FeatureName)],
+                    [],
+                    [erl_syntax:abstract(maps:get(FeatureName,
+                                                  AllFeatureFlags))])
+                     || FeatureName <- maps:keys(AllFeatureFlags)
+                    ],
+    GetUnknownClause = erl_syntax:clause(
+                         [erl_syntax:variable("_")],
+                         [],
+                         [erl_syntax:atom(undefined)]),
+    GetFun = erl_syntax:function(
+               erl_syntax:atom(get),
+               GetClauses ++ [GetUnknownClause]),
+    GetFunForm = erl_syntax:revert(GetFun),
     %% list(_) -> ...
     ListAllBody = erl_syntax:abstract(AllFeatureFlags),
     ListAllClause = erl_syntax:clause([erl_syntax:atom(all)],
@@ -418,6 +434,7 @@ regen_registry_mod(AllFeatureFlags,
     %% Compilation!
     Forms = [ModuleForm,
              ExportForm,
+             GetFunForm,
              ListFunForm,
              IsSupportedFunForm,
              IsEnabledFunForm],
