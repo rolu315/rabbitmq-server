@@ -38,6 +38,8 @@
          info/0,
          info/1,
          init/0,
+         get_state/1,
+         get_stability/1,
          check_node_compatibility/1,
          check_node_compatibility/2,
          is_node_compatible/1,
@@ -89,10 +91,7 @@ list(disabled) -> maps:filter(
 list(Which, Stability)
   when Stability =:= stable orelse Stability =:= experimental ->
     maps:filter(fun(_, FeatureProps) ->
-                        case maps:get(stability, FeatureProps, stable) of
-                            Stability -> true;
-                            _         -> false
-                        end
+                        Stability =:= get_stability(FeatureProps)
                 end, list(Which)).
 
 -spec enable(feature_name() | [feature_name()]) -> ok | {error, any()}.
@@ -273,12 +272,36 @@ is_disabled(FeatureName, Blocking) ->
 -spec info() -> ok.
 
 info() ->
-    info(0).
+    info(#{}).
 
--spec info(non_neg_integer()) -> ok.
+-spec info(#{color => boolean(),
+             verbose => non_neg_integer()}) -> ok.
 
-info(Verbosity) ->
-    rabbit_ff_extra:info(Verbosity).
+info(Options) when is_map(Options) ->
+    rabbit_ff_extra:info(Options).
+
+-spec get_state(feature_name()) -> enabled | disabled | unavailable.
+
+get_state(FeatureName) when is_atom(FeatureName) ->
+    IsEnabled = rabbit_feature_flags:is_enabled(FeatureName),
+    IsSupported = rabbit_feature_flags:is_supported(FeatureName),
+    case IsEnabled of
+        true  -> enabled;
+        false -> case IsSupported of
+                     true  -> disabled;
+                     false -> unavailable
+                 end
+    end.
+
+-spec get_stability(feature_name() | feature_props()) -> stability().
+
+get_stability(FeatureName) when is_atom(FeatureName) ->
+    case rabbit_ff_registry:get(FeatureName) of
+        undefined    -> undefined;
+        FeatureProps -> get_stability(FeatureProps)
+    end;
+get_stability(FeatureProps) when is_map(FeatureProps) ->
+    maps:get(stability, FeatureProps, stable).
 
 %% -------------------------------------------------------------------
 %% Feature flags registry.
