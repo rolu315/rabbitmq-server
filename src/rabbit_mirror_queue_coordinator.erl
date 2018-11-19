@@ -38,7 +38,7 @@
                }).
 
 -spec start_link
-        (rabbit_types:amqqueue(), pid() | 'undefined',
+        (amqqueue:amqqueue(), pid() | 'undefined',
          rabbit_mirror_queue_master:death_fun(),
          rabbit_mirror_queue_master:depth_fun()) ->
             rabbit_types:ok_pid_or_error().

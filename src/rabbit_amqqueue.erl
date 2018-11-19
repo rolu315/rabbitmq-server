@@ -73,104 +73,104 @@
 -type name() :: rabbit_types:r('queue').
 -type qpids() :: [pid()].
 -type qlen() :: rabbit_types:ok(non_neg_integer()).
--type qfun(A) :: fun ((rabbit_types:amqqueue()) -> A | no_return()).
+-type qfun(A) :: fun ((amqqueue:amqqueue()) -> A | no_return()).
 -type qmsg() :: {name(), pid(), msg_id(), boolean(), rabbit_types:message()}.
 -type msg_id() :: non_neg_integer().
 -type ok_or_errors() ::
         'ok' | {'error', [{'error' | 'exit' | 'throw', any()}]}.
 -type absent_reason() :: 'nodedown' | 'crashed'.
--type queue_or_absent() :: rabbit_types:amqqueue() |
-                           {'absent', rabbit_types:amqqueue(),absent_reason()}.
+-type queue_or_absent() :: amqqueue:amqqueue() |
+                           {'absent', amqqueue:amqqueue(),absent_reason()}.
 -type not_found_or_absent() ::
-        'not_found' | {'absent', rabbit_types:amqqueue(), absent_reason()}.
--spec recover(rabbit_types:vhost()) -> [rabbit_types:amqqueue()].
+        'not_found' | {'absent', amqqueue:amqqueue(), absent_reason()}.
+-spec recover(rabbit_types:vhost()) -> [amqqueue:amqqueue()].
 -spec stop(rabbit_types:vhost()) -> 'ok'.
--spec start([rabbit_types:amqqueue()]) -> 'ok'.
+-spec start([amqqueue:amqqueue()]) -> 'ok'.
 -spec declare
         (name(), boolean(), boolean(), rabbit_framing:amqp_table(),
          rabbit_types:maybe(pid()), rabbit_types:username()) ->
             {'new' | 'existing' | 'absent' | 'owner_died',
-             rabbit_types:amqqueue()} |
-            {'new', rabbit_types:amqqueue(), rabbit_fifo_client:state()} |
+             amqqueue:amqqueue()} |
+            {'new', amqqueue:amqqueue(), rabbit_fifo_client:state()} |
             rabbit_types:channel_exit().
 -spec declare
         (name(), boolean(), boolean(), rabbit_framing:amqp_table(),
          rabbit_types:maybe(pid()), rabbit_types:username(), node()) ->
-            {'new' | 'existing' | 'owner_died', rabbit_types:amqqueue()} |
-            {'new', rabbit_types:amqqueue(), rabbit_fifo_client:state()} |
-            {'absent', rabbit_types:amqqueue(), absent_reason()} |
+            {'new' | 'existing' | 'owner_died', amqqueue:amqqueue()} |
+            {'new', amqqueue:amqqueue(), rabbit_fifo_client:state()} |
+            {'absent', amqqueue:amqqueue(), absent_reason()} |
             rabbit_types:channel_exit().
--spec internal_declare(rabbit_types:amqqueue(), boolean()) ->
+-spec internal_declare(amqqueue:amqqueue(), boolean()) ->
           queue_or_absent() | rabbit_misc:thunk(queue_or_absent()).
 -spec update
-        (name(), fun((rabbit_types:amqqueue()) -> rabbit_types:amqqueue())) ->
-            'not_found' | rabbit_types:amqqueue().
+        (name(), fun((amqqueue:amqqueue()) -> amqqueue:amqqueue())) ->
+            'not_found' | amqqueue:amqqueue().
 -spec lookup
         (name()) ->
-            rabbit_types:ok(rabbit_types:amqqueue()) |
+            rabbit_types:ok(amqqueue:amqqueue()) |
             rabbit_types:error('not_found');
         ([name()]) ->
-            [rabbit_types:amqqueue()].
+            [amqqueue:amqqueue()].
 -spec not_found_or_absent(name()) -> not_found_or_absent().
 -spec with(name(), qfun(A)) ->
           A | rabbit_types:error(not_found_or_absent()).
 -spec with(name(), qfun(A), fun((not_found_or_absent()) -> B)) -> A | B.
 -spec with_or_die(name(), qfun(A)) -> A | rabbit_types:channel_exit().
 -spec not_found(rabbit_types:r(atom())) -> rabbit_types:channel_exit().
--spec absent(rabbit_types:amqqueue(), rabbit_amqqueue:absent_reason()) ->
+-spec absent(amqqueue:amqqueue(), rabbit_amqqueue:absent_reason()) ->
           rabbit_types:channel_exit().
 -spec assert_equivalence
-        (rabbit_types:amqqueue(), boolean(), boolean(),
+        (amqqueue:amqqueue(), boolean(), boolean(),
          rabbit_framing:amqp_table(), rabbit_types:maybe(pid())) ->
             'ok' | rabbit_types:channel_exit() | rabbit_types:connection_exit().
--spec check_exclusive_access(rabbit_types:amqqueue(), pid()) ->
+-spec check_exclusive_access(amqqueue:amqqueue(), pid()) ->
           'ok' | rabbit_types:channel_exit().
 -spec with_exclusive_access_or_die(name(), pid(), qfun(A)) ->
           A | rabbit_types:channel_exit().
--spec list() -> [rabbit_types:amqqueue()].
--spec list(rabbit_types:vhost()) -> [rabbit_types:amqqueue()].
+-spec list() -> [amqqueue:amqqueue()].
+-spec list(rabbit_types:vhost()) -> [amqqueue:amqqueue()].
 -spec list_names() -> [rabbit_amqqueue:name()].
--spec list_down(rabbit_types:vhost()) -> [rabbit_types:amqqueue()].
--spec list_by_type(atom()) -> [rabbit_types:amqqueue()].
+-spec list_down(rabbit_types:vhost()) -> [amqqueue:amqqueue()].
+-spec list_by_type(atom()) -> [amqqueue:amqqueue()].
 -spec info_keys() -> rabbit_types:info_keys().
--spec info(rabbit_types:amqqueue()) -> rabbit_types:infos().
--spec info(rabbit_types:amqqueue(), rabbit_types:info_keys()) ->
+-spec info(amqqueue:amqqueue()) -> rabbit_types:infos().
+-spec info(amqqueue:amqqueue(), rabbit_types:info_keys()) ->
           rabbit_types:infos().
 -spec info_all(rabbit_types:vhost()) -> [rabbit_types:infos()].
 -spec info_all(rabbit_types:vhost(), rabbit_types:info_keys()) ->
           [rabbit_types:infos()].
 -deprecated([{force_event_refresh, 1, eventually}]).
 -spec force_event_refresh(reference()) -> 'ok'.
--spec notify_policy_changed(rabbit_types:amqqueue()) -> 'ok'.
--spec consumers(rabbit_types:amqqueue()) ->
+-spec notify_policy_changed(amqqueue:amqqueue()) -> 'ok'.
+-spec consumers(amqqueue:amqqueue()) ->
           [{pid(), rabbit_types:ctag(), boolean(), non_neg_integer(),
             rabbit_framing:amqp_table()}].
 -spec consumer_info_keys() -> rabbit_types:info_keys().
 -spec consumers_all(rabbit_types:vhost()) ->
           [{name(), pid(), rabbit_types:ctag(), boolean(),
             non_neg_integer(), rabbit_framing:amqp_table()}].
--spec stat(rabbit_types:amqqueue()) ->
+-spec stat(amqqueue:amqqueue()) ->
           {'ok', non_neg_integer(), non_neg_integer()}.
 -spec delete_immediately(qpids()) -> 'ok'.
 -spec delete_exclusive(qpids(), pid()) -> 'ok'.
 -spec delete
-        (rabbit_types:amqqueue(), 'false', 'false', rabbit_types:username()) ->
+        (amqqueue:amqqueue(), 'false', 'false', rabbit_types:username()) ->
             qlen();
-        (rabbit_types:amqqueue(), 'true' , 'false', rabbit_types:username()) ->
+        (amqqueue:amqqueue(), 'true' , 'false', rabbit_types:username()) ->
             qlen() | rabbit_types:error('in_use');
-        (rabbit_types:amqqueue(), 'false', 'true', rabbit_types:username()) ->
+        (amqqueue:amqqueue(), 'false', 'true', rabbit_types:username()) ->
             qlen() | rabbit_types:error('not_empty');
-        (rabbit_types:amqqueue(), 'true' , 'true', rabbit_types:username()) ->
+        (amqqueue:amqqueue(), 'true' , 'true', rabbit_types:username()) ->
             qlen() |
             rabbit_types:error('in_use') |
             rabbit_types:error('not_empty').
--spec delete_crashed(rabbit_types:amqqueue()) -> 'ok'.
--spec delete_crashed_internal(rabbit_types:amqqueue(), rabbit_types:username()) -> 'ok'.
--spec purge(rabbit_types:amqqueue()) -> {ok, qlen()}.
+-spec delete_crashed(amqqueue:amqqueue()) -> 'ok'.
+-spec delete_crashed_internal(amqqueue:amqqueue(), rabbit_types:username()) -> 'ok'.
+-spec purge(amqqueue:amqqueue()) -> {ok, qlen()}.
 -spec forget_all_durable(node()) -> 'ok'.
--spec deliver([rabbit_types:amqqueue()], rabbit_types:delivery(), #{Name :: atom() => rabbit_fifo_client:state()} | 'untracked') ->
+-spec deliver([amqqueue:amqqueue()], rabbit_types:delivery(), #{Name :: atom() => rabbit_fifo_client:state()} | 'untracked') ->
                         {qpids(), #{Name :: atom() => rabbit_fifo_client:state()}}.
--spec deliver([rabbit_types:amqqueue()], rabbit_types:delivery()) -> 'ok'.
+-spec deliver([amqqueue:amqqueue()], rabbit_types:delivery()) -> 'ok'.
 -spec requeue(pid(), [msg_id()],  pid(), #{Name :: atom() => rabbit_fifo_client:state()}) -> 'ok'.
 -spec ack(pid(), [msg_id()], pid(), #{Name :: atom() => rabbit_fifo_client:state()}) -> 'ok'.
 -spec reject(pid() | {atom(), node()}, [msg_id()], boolean(), pid(),
@@ -179,24 +179,24 @@
 -spec notify_down_all(qpids(), pid(), non_neg_integer()) ->
           ok_or_errors().
 -spec activate_limit_all(qpids(), pid()) -> ok_or_errors().
--spec basic_get(rabbit_types:amqqueue(), pid(), boolean(), pid(), rabbit_types:ctag(),
+-spec basic_get(amqqueue:amqqueue(), pid(), boolean(), pid(), rabbit_types:ctag(),
                 #{Name :: atom() => rabbit_fifo_client:state()}) ->
           {'ok', non_neg_integer(), qmsg()} | 'empty'.
 -spec credit
-        (rabbit_types:amqqueue(), pid(), rabbit_types:ctag(), non_neg_integer(),
+        (amqqueue:amqqueue(), pid(), rabbit_types:ctag(), non_neg_integer(),
          boolean(), #{Name :: atom() => rabbit_fifo_client:state()}) ->
             'ok'.
 -spec basic_consume
-        (rabbit_types:amqqueue(), boolean(), pid(), pid(), boolean(),
+        (amqqueue:amqqueue(), boolean(), pid(), pid(), boolean(),
          non_neg_integer(), rabbit_types:ctag(), boolean(),
          rabbit_framing:amqp_table(), any(), rabbit_types:username(),
          #{Name :: atom() => rabbit_fifo_client:state()}) ->
             rabbit_types:ok_or_error('exclusive_consume_unavailable').
 -spec basic_cancel
-        (rabbit_types:amqqueue(), pid(), rabbit_types:ctag(), any(),
+        (amqqueue:amqqueue(), pid(), rabbit_types:ctag(), any(),
          rabbit_types:username(), #{Name :: atom() => rabbit_fifo_client:state()}) ->
                           'ok' | {'ok', #{Name :: atom() => rabbit_fifo_client:state()}}.
--spec notify_decorators(rabbit_types:amqqueue()) -> 'ok'.
+-spec notify_decorators(amqqueue:amqqueue()) -> 'ok'.
 -spec resume(pid(), pid()) -> 'ok'.
 -spec internal_delete(name(), rabbit_types:username()) ->
           'ok' | rabbit_types:connection_exit() |
@@ -209,21 +209,21 @@
 -spec set_maximum_since_use(pid(), non_neg_integer()) -> 'ok'.
 -spec on_node_up(node()) -> 'ok'.
 -spec on_node_down(node()) -> 'ok'.
--spec pseudo_queue(name(), pid()) -> rabbit_types:amqqueue().
--spec pseudo_queue(name(), pid(), boolean()) -> rabbit_types:amqqueue().
--spec immutable(rabbit_types:amqqueue()) -> rabbit_types:amqqueue().
--spec store_queue(rabbit_types:amqqueue()) -> 'ok'.
+-spec pseudo_queue(name(), pid()) -> amqqueue:amqqueue().
+-spec pseudo_queue(name(), pid(), boolean()) -> amqqueue:amqqueue().
+-spec immutable(amqqueue:amqqueue()) -> amqqueue:amqqueue().
+-spec store_queue(amqqueue:amqqueue()) -> 'ok'.
 -spec update_decorators(name()) -> 'ok'.
--spec policy_changed(rabbit_types:amqqueue(), rabbit_types:amqqueue()) ->
+-spec policy_changed(amqqueue:amqqueue(), amqqueue:amqqueue()) ->
           'ok'.
 -spec update_mirroring(pid()) -> 'ok'.
--spec sync_mirrors(rabbit_types:amqqueue() | pid()) ->
+-spec sync_mirrors(amqqueue:amqqueue() | pid()) ->
           'ok' | rabbit_types:error('not_mirrored').
--spec cancel_sync_mirrors(rabbit_types:amqqueue() | pid()) ->
+-spec cancel_sync_mirrors(amqqueue:amqqueue() | pid()) ->
           'ok' | {'ok', 'not_syncing'}.
--spec is_replicated(rabbit_types:amqqueue()) -> boolean().
+-spec is_replicated(amqqueue:amqqueue()) -> boolean().
 
--spec pid_of(rabbit_types:amqqueue()) ->
+-spec pid_of(amqqueue:amqqueue()) ->
           {'ok', pid()} | rabbit_types:error('not_found').
 -spec pid_of(rabbit_types:vhost(), rabbit_misc:resource_name()) ->
           {'ok', pid()} | rabbit_types:error('not_found').
@@ -1112,9 +1112,9 @@ delete(Q, IfUnused, IfEmpty, ActingUser) ->
             {ok, 0}
     end.
 
--spec wait_for_promoted_or_stopped(rabbit_types:amqqueue()) ->
-    {promoted, rabbit_types:amqqueue()} |
-    {stopped, rabbit_types:amqqueue()} |
+-spec wait_for_promoted_or_stopped(amqqueue:amqqueue()) ->
+    {promoted, amqqueue:amqqueue()} |
+    {stopped, amqqueue:amqqueue()} |
     {error, not_found}.
 wait_for_promoted_or_stopped(Q0) ->
     QName = amqqueue:get_name(Q0),

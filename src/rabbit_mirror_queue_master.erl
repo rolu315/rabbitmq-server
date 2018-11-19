@@ -69,7 +69,7 @@
 
 -spec sender_death_fun() -> death_fun().
 -spec depth_fun() -> depth_fun().
--spec init_with_existing_bq(rabbit_types:amqqueue(), atom(), any()) ->
+-spec init_with_existing_bq(amqqueue:amqqueue(), atom(), any()) ->
           master_state().
 -spec stop_mirroring(master_state()) -> {atom(), any()}.
 -spec sync_mirrors(stats_fun(), stats_fun(), master_state()) ->

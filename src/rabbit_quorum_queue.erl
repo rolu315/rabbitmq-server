@@ -47,21 +47,21 @@
 -spec handle_event({'ra_event', ra_server_id(), any()}, rabbit_fifo_client:state()) ->
                           {'internal', Correlators :: [term()], rabbit_fifo_client:state()} |
                           {rabbit_fifo:client_msg(), rabbit_fifo_client:state()}.
--spec declare(rabbit_types:amqqueue()) -> {'new', rabbit_types:amqqueue(), rabbit_fifo_client:state()}.
--spec recover([rabbit_types:amqqueue()]) -> [rabbit_types:amqqueue() |
-                                             {'absent', rabbit_types:amqqueue(), atom()}].
+-spec declare(amqqueue:amqqueue()) -> {'new', amqqueue:amqqueue(), rabbit_fifo_client:state()}.
+-spec recover([amqqueue:amqqueue()]) -> [amqqueue:amqqueue() |
+                                             {'absent', amqqueue:amqqueue(), atom()}].
 -spec stop(rabbit_types:vhost()) -> 'ok'.
--spec delete(rabbit_types:amqqueue(), boolean(), boolean(), rabbit_types:username()) ->
+-spec delete(amqqueue:amqqueue(), boolean(), boolean(), rabbit_types:username()) ->
                     {'ok', QLen :: non_neg_integer()}.
 -spec ack(rabbit_types:ctag(), [msg_id()], rabbit_fifo_client:state()) ->
                  {'ok', rabbit_fifo_client:state()}.
 -spec reject(Confirm :: boolean(), rabbit_types:ctag(), [msg_id()], rabbit_fifo_client:state()) ->
                     {'ok', rabbit_fifo_client:state()}.
--spec basic_get(rabbit_types:amqqueue(), NoAck :: boolean(), rabbit_types:ctag(),
+-spec basic_get(amqqueue:amqqueue(), NoAck :: boolean(), rabbit_types:ctag(),
                 rabbit_fifo_client:state()) ->
                        {'ok', 'empty', rabbit_fifo_client:state()} |
                        {'ok', QLen :: non_neg_integer(), qmsg(), rabbit_fifo_client:state()}.
--spec basic_consume(rabbit_types:amqqueue(), NoAck :: boolean(), ChPid :: pid(),
+-spec basic_consume(amqqueue:amqqueue(), NoAck :: boolean(), ChPid :: pid(),
                     ConsumerPrefetchCount :: non_neg_integer(), rabbit_types:ctag(),
                     ExclusiveConsume :: boolean(), Args :: rabbit_framing:amqp_table(),
                     any(), rabbit_fifo_client:state()) -> {'ok', rabbit_fifo_client:state()}.
@@ -70,10 +70,10 @@
 -spec stateless_deliver(ra_server_id(), rabbit_types:delivery()) -> 'ok'.
 -spec deliver(Confirm :: boolean(), rabbit_types:delivery(), rabbit_fifo_client:state()) ->
                      rabbit_fifo_client:state().
--spec info(rabbit_types:amqqueue()) -> rabbit_types:infos().
--spec info(rabbit_types:amqqueue(), rabbit_types:info_keys()) -> rabbit_types:infos().
+-spec info(amqqueue:amqqueue()) -> rabbit_types:infos().
+-spec info(amqqueue:amqqueue(), rabbit_types:info_keys()) -> rabbit_types:infos().
 -spec infos(rabbit_types:r('queue')) -> rabbit_types:infos().
--spec stat(rabbit_types:amqqueue()) -> {'ok', non_neg_integer(), non_neg_integer()}.
+-spec stat(amqqueue:amqqueue()) -> {'ok', non_neg_integer(), non_neg_integer()}.
 -spec cluster_state(Name :: atom()) -> 'down' | 'recovering' | 'running'.
 -spec status(rabbit_types:vhost(), Name :: atom()) -> rabbit_types:infos() | {error, term()}.
 

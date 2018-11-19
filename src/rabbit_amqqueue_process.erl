@@ -36,7 +36,7 @@
 %% Queue's state
 -record(q, {
             %% an amqqueue() record
-            q :: rabbit_types:amqqueue(),
+            q :: amqqueue:amqqueue(),
             %% none | {exclusive consumer channel PID, consumer tag}
             exclusive_consumer,
             %% Set to true if a queue has ever had a consumer.
@@ -102,7 +102,7 @@
 
 -spec info_keys() -> rabbit_types:info_keys().
 -spec init_with_backing_queue_state
-        (rabbit_types:amqqueue(), atom(), tuple(), any(),
+        (amqqueue:amqqueue(), atom(), tuple(), any(),
          [rabbit_types:delivery()], pmon:pmon(), gb_trees:tree()) ->
             #q{}.
 

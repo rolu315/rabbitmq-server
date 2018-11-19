@@ -32,7 +32,7 @@
 
 -spec start_link() -> rabbit_types:ok_pid_or_error().
 -spec start_queue_process
-        (node(), rabbit_types:amqqueue(), 'declare' | 'recovery' | 'slave') ->
+        (node(), amqqueue:amqqueue(), 'declare' | 'recovery' | 'slave') ->
             pid().
 
 %%----------------------------------------------------------------------------

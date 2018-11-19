@@ -27,18 +27,18 @@
 
 %%----------------------------------------------------------------------------
 
--callback startup(rabbit_types:amqqueue()) -> 'ok'.
+-callback startup(amqqueue:amqqueue()) -> 'ok'.
 
--callback shutdown(rabbit_types:amqqueue()) -> 'ok'.
+-callback shutdown(amqqueue:amqqueue()) -> 'ok'.
 
--callback policy_changed(rabbit_types:amqqueue(), rabbit_types:amqqueue()) ->
+-callback policy_changed(amqqueue:amqqueue(), amqqueue:amqqueue()) ->
     'ok'.
 
--callback active_for(rabbit_types:amqqueue()) -> boolean().
+-callback active_for(amqqueue:amqqueue()) -> boolean().
 
 %% called with Queue, MaxActivePriority, IsEmpty
 -callback consumer_state_changed(
-            rabbit_types:amqqueue(), integer(), boolean()) -> 'ok'.
+            amqqueue:amqqueue(), integer(), boolean()) -> 'ok'.
 
 %%----------------------------------------------------------------------------
 

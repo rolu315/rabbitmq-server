@@ -62,18 +62,18 @@
             {'ok', pid(), [pid()], [node()]} | {'error', 'not_found'}.
 -spec add_mirrors(rabbit_amqqueue:name(), [node()], 'sync' | 'async') ->
           'ok'.
--spec store_updated_slaves(rabbit_types:amqqueue()) ->
-          rabbit_types:amqqueue().
--spec initial_queue_node(rabbit_types:amqqueue(), node()) -> node().
--spec suggested_queue_nodes(rabbit_types:amqqueue()) ->
+-spec store_updated_slaves(amqqueue:amqqueue()) ->
+          amqqueue:amqqueue().
+-spec initial_queue_node(amqqueue:amqqueue(), node()) -> node().
+-spec suggested_queue_nodes(amqqueue:amqqueue()) ->
           {node(), [node()]}.
--spec is_mirrored(rabbit_types:amqqueue()) -> boolean().
+-spec is_mirrored(amqqueue:amqqueue()) -> boolean().
 -spec update_mirrors
-        (rabbit_types:amqqueue(), rabbit_types:amqqueue()) -> 'ok'.
+        (amqqueue:amqqueue(), amqqueue:amqqueue()) -> 'ok'.
 -spec update_mirrors
-        (rabbit_types:amqqueue()) -> 'ok'.
--spec maybe_drop_master_after_sync(rabbit_types:amqqueue()) -> 'ok'.
--spec maybe_auto_sync(rabbit_types:amqqueue()) -> 'ok'.
+        (amqqueue:amqqueue()) -> 'ok'.
+-spec maybe_drop_master_after_sync(amqqueue:amqqueue()) -> 'ok'.
+-spec maybe_auto_sync(amqqueue:amqqueue()) -> 'ok'.
 -spec log_info(rabbit_amqqueue:name(), string(), [any()]) -> 'ok'.
 -spec log_warning(rabbit_amqqueue:name(), string(), [any()]) -> 'ok'.
 
