@@ -65,7 +65,8 @@
 -type feature_name() :: atom().
 -type feature_props() :: #{desc => string(),
                            stability => stability(),
-                           migration_fun => migration_fun()}.
+                           migration_fun => migration_fun(),
+                           provided_by => atom()}.
 -type stability() :: stable | experimental.
 -type migration_fun() :: fun((feature_name(), feature_props(), enable)
                              -> ok | {error, any()}).

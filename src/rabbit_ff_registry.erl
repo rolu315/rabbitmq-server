@@ -22,7 +22,7 @@
          is_enabled/1]).
 
 -spec get(rabbit_feature_flags:feature_name()) ->
-    rabbit_feature_flags:feature_props().
+    rabbit_feature_flags:feature_props() | undefined.
 
 get(Arg) ->
     rabbit_feature_flags:initialize_registry(),

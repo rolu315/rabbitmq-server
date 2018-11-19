@@ -90,6 +90,45 @@
 
 -define(record_version, amqqueue_v2).
 
+-record(amqqueue, {
+          name:: rabbit_amqqueue:name() | '_',                       %% immutable
+          durable:: boolean() | '_',                                 %% immutable
+          auto_delete:: boolean() | '_',                             %% immutable
+          exclusive_owner = none :: rabbit_types:maybe(pid()) | '_', %% immutable
+          arguments :: rabbit_framing:amqp_table() | '_',            %% immutable
+          pid :: pid() | {atom(), atom()} | none | '_', %% durable (just so we know home
+                                                        %% node)
+          slave_pids :: [pid()] | '_',       %% transient
+          sync_slave_pids,             %% transient
+          recoverable_slaves,          %% durable
+          policy,                      %% durable, implicit update as above
+          operator_policy,             %% durable, implicit update as above
+          gm_pids,                     %% transient
+          decorators,                  %% transient, recalculated as above
+          state,                       %% durable (have we crashed?)
+          policy_version,
+          slave_pids_pending_shutdown,
+          vhost :: rabbit_types:vhost() | '_', %% secondary index
+          options = #{},
+          type = classic,
+          quorum_nodes }).
+
+-opaque amqqueue_v2() :: #amqqueue{}.
+-opaque amqqueue() :: amqqueue_v1:amqqueue_v1() | amqqueue_v2().
+
+-export_type([amqqueue/0,
+              amqqueue_v2/0]).
+
+-spec new(rabbit_amqqueue:name(),
+          rabbit_types:maybe(pid()),
+          boolean(),
+          boolean(),
+          rabbit_types:maybe(pid()),
+          rabbit_framing:amqp_table(),
+          rabbit_types:vhost(),
+          #{},
+          classic | quorum) -> amqqueue().
+
 new(Name,
     Pid,
     Durable,
@@ -400,6 +439,8 @@ pattern_match_all() ->
         _               -> amqqueue_v1:pattern_match_all()
     end.
 
+-spec pattern_match_on_name(rabbit_amqqueue:name()) -> tuple().
+
 pattern_match_on_name(Name) ->
     case record_version_to_use() of
         ?record_version -> #amqqueue{name = Name, _ = '_'};
@@ -429,7 +470,7 @@ reset_mirroring_and_decorators(Queue) ->
 
 set_immutable(#amqqueue{} = Queue) ->
     Queue#amqqueue{pid                = none,
-                   slave_pids         = none,
+                   slave_pids         = [],
                    sync_slave_pids    = none,
                    recoverable_slaves = none,
                    gm_pids            = none,

@@ -250,9 +250,7 @@ display_table([[FirstLine | _] | _] = Rows, UseColors, UseLines) ->
                    end,
     io:format("~n~s~n", [TopBorder]),
     display_rows(Rows, ColsWidths, FormatString, UseColors, MiddleBorder),
-    io:format("~s~n", [BottomBorder]);
-display_table([], _, _) ->
-    ok.
+    io:format("~s~n", [BottomBorder]).
 
 display_rows([Row | Rest],
              ColsWidths, FormatString, UseColors, MiddleBorder) ->

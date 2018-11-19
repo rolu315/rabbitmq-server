@@ -98,6 +98,10 @@
           vhost,                       %% secondary index
           options = #{}}).
 
+-opaque amqqueue_v1() :: #amqqueue{}.
+
+-export_type([amqqueue_v1/0]).
+
 new(Name,
     Pid,
     Durable,
