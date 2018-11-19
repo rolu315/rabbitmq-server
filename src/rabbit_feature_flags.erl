@@ -510,8 +510,10 @@ write_enabled_feature_flags_list(FeatureNames) ->
     file:write_file(File, Content).
 
 enabled_feature_flags_list_file() ->
-    %% FIXME: Use a feature-flags-specific directory.
-    filename:join(rabbit_mnesia:dir(), "feature_flags").
+    case application:get_env(rabbit, feature_flags_file) of
+        {ok, Val} -> Val;
+        _         -> filename:join([rabbit_mnesia:dir(), "feature_flags"])
+    end.
 
 %% -------------------------------------------------------------------
 %% Feature flags management: enabling.
@@ -609,7 +611,7 @@ run_migration_fun(FeatureName, Arg) ->
         Invalid ->
             rabbit_log:error("Feature flag `~s`: invalid migration "
                              "function: ~p",
-                            [FeatureName, Invalid]),
+                             [FeatureName, Invalid]),
             {error, {invalid_migration_fun, Invalid}}
     end.
 

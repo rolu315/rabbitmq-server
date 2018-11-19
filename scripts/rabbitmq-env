@@ -246,6 +246,7 @@ DEFAULT_NODE_PORT=5672
 [ "x" = "x$RABBITMQ_MNESIA_DIR" ] && RABBITMQ_MNESIA_DIR=${MNESIA_DIR}
 [ "x" = "x$RABBITMQ_MNESIA_DIR" ] && RABBITMQ_MNESIA_DIR=${RABBITMQ_MNESIA_BASE}/${RABBITMQ_NODENAME}
 [ "x" = "x$RABBITMQ_QUORUM_DIR" ] && RABBITMQ_QUORUM_DIR=${RABBITMQ_MNESIA_DIR}/quorum
+[ "x" = "x$RABBITMQ_FEATURE_FLAGS_FILE" ] && RABBITMQ_FEATURE_FLAGS_FILE=${RABBITMQ_MNESIA_DIR}/feature_flags
 [ "x" = "x$RABBITMQ_GENERATED_CONFIG_DIR" ] && RABBITMQ_GENERATED_CONFIG_DIR=${GENERATED_CONFIG_DIR}
 [ "x" = "x$RABBITMQ_ADVANCED_CONFIG_FILE" ] && RABBITMQ_ADVANCED_CONFIG_FILE=${ADVANCED_CONFIG_FILE}
 [ "x" = "x$RABBITMQ_SCHEMA_DIR" ] && RABBITMQ_SCHEMA_DIR=${SCHEMA_DIR}
@@ -257,7 +258,8 @@ rmq_normalize_path_var \
     RABBITMQ_LOG_BASE \
     RABBITMQ_MNESIA_BASE \
     RABBITMQ_MNESIA_DIR \
-    RABBITMQ_QUORUM_DIR
+    RABBITMQ_QUORUM_DIR \
+    RABBITMQ_FEATURE_FLAGS_FILE
 
 [ "x" = "x$RABBITMQ_PID_FILE" ] && RABBITMQ_PID_FILE="$PID_FILE"
 
@@ -320,21 +322,28 @@ rmq_check_if_shared_with_mnesia \
 
 ## Development-specific environment.
 if [ "${RABBITMQ_DEV_ENV}" ]; then
-    if [ "$RABBITMQ_PLUGINS_DIR_source" != 'environment' -o \
+    if [ "$RABBITMQ_FEATURE_FLAGS_FILE_source" != 'environment' -o \
+         "$RABBITMQ_PLUGINS_DIR_source" != 'environment' -o \
          "$RABBITMQ_ENABLED_PLUGINS_FILE_source" != 'environment' ]; then
         # We need to query the running node for the plugins directory
         # and the "enabled plugins" file.
         eval $( (${RABBITMQ_SCRIPTS_DIR}/rabbitmqctl eval \
-            '{ok, P} = application:get_env(rabbit, plugins_dir),
+            '{ok, F} = application:get_env(rabbit, feature_flags_file),
+             {ok, P} = application:get_env(rabbit, plugins_dir),
              {ok, E} = application:get_env(rabbit, enabled_plugins_file),
              B = os:getenv("RABBITMQ_MNESIA_BASE"),
              M = os:getenv("RABBITMQ_MNESIA_DIR"),
              io:format(
+               "feature_flags_file=\"~s\"~n"
                "plugins_dir=\"~s\"~n"
                "enabled_plugins_file=\"~s\"~n"
                "mnesia_base=\"~s\"~n"
-               "mnesia_dir=\"~s\"~n", [P, E, B, M]).' \
-            2>/dev/null | grep -E '^(plugins_dir|enabled_plugins_file|mnesia_base|mnesia_dir)=') || :)
+               "mnesia_dir=\"~s\"~n", [F, P, E, B, M]).' \
+            2>/dev/null | grep -E '^(feature_flags_file|plugins_dir|enabled_plugins_file|mnesia_base|mnesia_dir)=') || :)
+        if [ "${feature_flags_file}" -a \
+             "$RABBITMQ_FEATURE_FLAGS_FILE_source" != 'environment' ]; then
+            RABBITMQ_FEATURE_FLAGS_FILE="${feature_flags_file}"
+        fi
         if [ "${plugins_dir}" -a \
              "$RABBITMQ_PLUGINS_DIR_source" != 'environment' ]; then
             RABBITMQ_PLUGINS_DIR="${plugins_dir}"
