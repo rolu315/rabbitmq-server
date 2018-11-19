@@ -80,36 +80,107 @@
 
 -define(record_version, ?MODULE).
 
-% TODO #160169569 what about dialyzer types?
-
 -record(amqqueue, {
-          name, durable, auto_delete, exclusive_owner = none, %% immutable
-          arguments,                   %% immutable
-          pid,                         %% durable (just so we know home node)
-          slave_pids, sync_slave_pids, %% transient
-          recoverable_slaves,          %% durable
-          policy,                      %% durable, implicit update as above
-          operator_policy,             %% durable, implicit update as above
-          gm_pids,                     %% transient
-          decorators,                  %% transient, recalculated as above
-          state,                       %% durable (have we crashed?)
-          policy_version,
-          slave_pids_pending_shutdown,
-          vhost,                       %% secondary index
-          options = #{}}).
+          name :: rabbit_amqqueue:name() | '_', %% immutable
+          durable :: boolean() | '_',           %% immutable
+          auto_delete :: boolean() | '_',       %% immutable
+          exclusive_owner = none :: pid() | none | '_', %% immutable
+          arguments = [] :: rabbit_framing:amqp_table() | '_', %% immutable
+          pid :: pid() | none | '_',            %% durable (just so we
+                                                %% know home node)
+          slave_pids = [] :: [pid()] | none | '_',    %% transient
+          sync_slave_pids = [] :: [pid()] | none| '_',%% transient
+          recoverable_slaves = [] :: [atom()] | none | '_', %% durable
+          policy :: binary() | none | undefined | '_', %% durable, implicit
+                                                       %% update as above
+          operator_policy :: binary() | none | undefined | '_', %% durable,
+                                                                %% implicit
+                                                                %% update
+                                                                %% as above
+          gm_pids = [] :: [pid()] | none | '_', %% transient
+          decorators :: [atom()] | none | undefined | '_', %% transient,
+                                                          %% recalculated
+                                                          %% as above
+          state = live :: atom() | none | '_', %% durable (have we crashed?)
+          policy_version = 0 :: non_neg_integer() | '_',
+          slave_pids_pending_shutdown = [] :: [pid()] | '_',
+          vhost :: rabbit_types:vhost() | undefined | '_', %% secondary index
+          options = #{} :: map() | '_'
+         }).
 
--opaque amqqueue_v1() :: #amqqueue{}.
+-type amqqueue() :: amqqueue_v1().
+-type amqqueue_v1() :: #amqqueue{
+                          name :: rabbit_amqqueue:name(),
+                          durable :: boolean(),
+                          auto_delete :: boolean(),
+                          exclusive_owner :: pid() | none,
+                          arguments :: rabbit_framing:amqp_table(),
+                          pid :: pid() | none,
+                          slave_pids :: [pid()] | none,
+                          sync_slave_pids :: [pid()] | none,
+                          recoverable_slaves :: [atom()] | none,
+                          policy :: binary() | none | undefined,
+                          operator_policy :: binary() | none | undefined,
+                          gm_pids :: [pid()] | none,
+                          decorators :: [atom()] | none | undefined,
+                          state :: atom() | none,
+                          policy_version :: non_neg_integer(),
+                          slave_pids_pending_shutdown :: [pid()],
+                          vhost :: rabbit_types:vhost() | undefined,
+                          options :: map()
+                         }.
 
--export_type([amqqueue_v1/0]).
+-type amqqueue_pattern() :: amqqueue_v1_pattern().
+-type amqqueue_v1_pattern() :: #amqqueue{
+                                  name :: rabbit_amqqueue:name() | '_',
+                                  durable :: '_',
+                                  auto_delete :: '_',
+                                  exclusive_owner :: '_',
+                                  arguments :: '_',
+                                  pid :: '_',
+                                  slave_pids :: '_',
+                                  sync_slave_pids :: '_',
+                                  recoverable_slaves :: '_',
+                                  policy :: '_',
+                                  operator_policy :: '_',
+                                  gm_pids :: '_',
+                                  decorators :: '_',
+                                  state :: '_',
+                                  policy_version :: '_',
+                                  slave_pids_pending_shutdown :: '_',
+                                  vhost :: '_',
+                                  options :: '_'
+                                 }.
 
-new(Name,
+-export_type([amqqueue/0,
+              amqqueue_v1/0,
+              amqqueue_pattern/0,
+              amqqueue_v1_pattern/0]).
+
+-spec new(rabbit_amqqueue:name(),
+          pid() | none,
+          boolean(),
+          boolean(),
+          pid() | none,
+          rabbit_framing:amqp_table(),
+          rabbit_types:vhost() | undefined,
+          map()) -> amqqueue().
+
+new(#resource{kind = queue} = Name,
     Pid,
     Durable,
     AutoDelete,
     Owner,
     Args,
     VHost,
-    Options) ->
+    Options)
+  when (is_pid(Pid) orelse Pid =:= none) andalso
+       is_boolean(Durable) andalso
+       is_boolean(AutoDelete) andalso
+       (is_pid(Owner) orelse Owner =:= none) andalso
+       is_list(Args) andalso
+       (is_binary(VHost) orelse VHost =:= undefined) andalso
+       is_map(Options) ->
     new_with_version(
       ?record_version,
       Name,
@@ -121,46 +192,68 @@ new(Name,
       VHost,
       Options).
 
+-spec new_with_version(amqqueue_v1,
+                       rabbit_amqqueue:name(),
+                       pid() | none,
+                       boolean(),
+                       boolean(),
+                       pid() | none,
+                       rabbit_framing:amqp_table(),
+                       rabbit_types:vhost() | undefined,
+                       map()) -> amqqueue().
+
 new_with_version(?record_version,
-                 Name,
+                 #resource{kind = queue} = Name,
                  Pid,
                  Durable,
                  AutoDelete,
                  Owner,
                  Args,
                  VHost,
-                 Options) ->
-    #amqqueue{name               = Name,
-              durable            = Durable,
-              auto_delete        = AutoDelete,
-              arguments          = Args,
-              exclusive_owner    = Owner,
-              pid                = Pid,
-              slave_pids         = [],
-              sync_slave_pids    = [],
-              recoverable_slaves = [],
-              gm_pids            = [],
-              state              = live,
-              policy_version     = 0,
-              slave_pids_pending_shutdown = [],
-              vhost              = VHost,
-              options            = Options}.
+                 Options)
+  when (is_pid(Pid) orelse Pid =:= none) andalso
+       is_boolean(Durable) andalso
+       is_boolean(AutoDelete) andalso
+       (is_pid(Owner) orelse Owner =:= none) andalso
+       is_list(Args) andalso
+       (is_binary(VHost) orelse VHost =:= undefined) andalso
+       is_map(Options) ->
+    #amqqueue{name            = Name,
+              durable         = Durable,
+              auto_delete     = AutoDelete,
+              arguments       = Args,
+              exclusive_owner = Owner,
+              pid             = Pid,
+              vhost           = VHost,
+              options         = Options}.
+
+-spec is_amqqueue(any()) -> boolean().
 
 is_amqqueue(#amqqueue{}) -> true;
 is_amqqueue(_)           -> false.
 
+-spec record_version_to_use() -> amqqueue_v1.
+
 record_version_to_use() ->
     ?record_version.
 
+-spec upgrade(amqqueue()) -> amqqueue().
+
 upgrade(#amqqueue{} = Queue) ->
     Queue.
+
+-spec upgrade_to(amqqueue_v1, amqqueue()) -> amqqueue().
 
 upgrade_to(?record_version, #amqqueue{} = Queue) ->
     Queue.
 
 % arguments
 
+-spec get_arguments(amqqueue()) -> rabbit_framing:amqp_table().
+
 get_arguments(#amqqueue{arguments = Args}) -> Args.
+
+-spec set_arguments(amqqueue(), rabbit_framing:amqp_table()) -> amqqueue().
 
 set_arguments(#amqqueue{} = Queue, Args) ->
     Queue#amqqueue{arguments = Args}.
@@ -268,7 +361,12 @@ fields(?record_version) -> record_info(fields, amqqueue).
 
 field_vhost() -> #amqqueue.vhost.
 
+-spec pattern_match_all() -> amqqueue_pattern().
+
 pattern_match_all() -> #amqqueue{_ = '_'}.
+
+-spec pattern_match_on_name(rabbit_amqqueue:name()) ->
+    amqqueue_pattern().
 
 pattern_match_on_name(Name) -> #amqqueue{name = Name, _ = '_'}.
 
