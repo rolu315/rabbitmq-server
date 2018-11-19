@@ -264,9 +264,9 @@ fields(?record_version) -> record_info(fields, amqqueue).
 
 field_vhost() -> #amqqueue.vhost.
 
-pattern_match_all() ->#amqqueue{_ = '_'}.
+pattern_match_all() -> #amqqueue{_ = '_'}.
 
-pattern_match_on_name(Name) ->#amqqueue{name = Name, _ = '_'}.
+pattern_match_on_name(Name) -> #amqqueue{name = Name, _ = '_'}.
 
 reset_mirroring_and_decorators(#amqqueue{} = Queue) ->
     Queue#amqqueue{slave_pids      = [],
