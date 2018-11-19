@@ -82,6 +82,7 @@
          is_quorum/1,
          pattern_match_all/0,
          pattern_match_on_name/1,
+         pattern_match_on_type/1,
          reset_mirroring_and_decorators/1,
          set_immutable/1,
          qnode/1,
@@ -403,6 +404,19 @@ pattern_match_on_name(Name) ->
     case record_version_to_use() of
         ?record_version -> #amqqueue{name = Name, _ = '_'};
         _               -> amqqueue_v1:pattern_match_on_name(Name)
+    end.
+
+-spec pattern_match_on_type(rabbit_amqqueue:type()) -> tuple().
+
+pattern_match_on_type(Type) ->
+    case record_version_to_use() of
+        ?record_version         -> #amqqueue{type = Type, _ = '_'};
+        _ when Type =:= classic -> amqqueue_v1:pattern_match_all();
+        %% FIXME: We try a pattern which should never match when the
+        %% `quorum_queue` feature flag is not enabled yet. Is there
+        %% a better solution?
+        _ ->                       amqqueue_v1:pattern_match_on_name(
+                                     undefined)
     end.
 
 reset_mirroring_and_decorators(#amqqueue{} = Queue) ->

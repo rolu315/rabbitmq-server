@@ -403,9 +403,12 @@ requeue(ConsumerTag, MsgIds, QState) ->
     rabbit_fifo_client:return(quorum_ctag(ConsumerTag), MsgIds, QState).
 
 cleanup_data_dir() ->
-    Names = [Name || #amqqueue{pid = {Name, _}, quorum_nodes = Nodes}
-                         <- rabbit_amqqueue:list_by_type(quorum),
-                     lists:member(node(), Nodes)],
+    Names = [begin
+                 {Name, _} = amqqueue:get_pid(Q),
+                 Name
+             end
+             || Q <- rabbit_amqqueue:list_by_type(quorum),
+                lists:member(node(), amqqueue:get_quorum_nodes(Q))],
     Registered = ra_directory:list_registered(),
     [maybe_delete_data_dir(UId) || {Name, UId} <- Registered,
                                    not lists:member(Name, Names)],

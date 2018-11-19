@@ -821,7 +821,8 @@ list_by_type(Type) ->
         mnesia:sync_transaction(
           fun () ->
                   mnesia:match_object(rabbit_durable_queue,
-                                      #amqqueue{_ = '_', type = Type}, read)
+                                      amqqueue:pattern_match_on_type(Type),
+                                      read)
           end),
     Qs.
 
