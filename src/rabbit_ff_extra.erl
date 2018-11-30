@@ -23,7 +23,7 @@
 -type cli_info() :: [cli_info_entry()].
 -type cli_info_entry() :: [{name, rabbit_feature_flags:feature_name()} |
                            {state, enabled | disabled | unavailable} |
-                           {stability, boolean()} |
+                           {stability, rabbit_feature_flags:stability()} |
                            {provided_by, atom()} |
                            {desc, string()}].
 
@@ -47,10 +47,10 @@ cli_info(FeatureFlags) ->
               App = maps:get(provided_by, FeatureProps),
               Desc = maps:get(desc, FeatureProps, ""),
               FFInfo = [{name, FeatureName},
+                        {desc, Desc},
                         {state, State},
                         {stability, Stability},
-                        {provided_by, App},
-                        {desc, Desc}],
+                        {provided_by, App}],
               [FFInfo | Acc]
       end, [], FeatureFlags).
 
