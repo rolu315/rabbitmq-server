@@ -187,8 +187,8 @@
 -type migration_fun_context() :: enable.
 
 -export_type([feature_flag_modattr/0,
-              feature_name/0,
               feature_props/0,
+              feature_name/0,
               feature_flags/0,
               feature_props_extended/0,
               stability/0,
@@ -471,7 +471,7 @@ get_state(FeatureName) when is_atom(FeatureName) ->
                  end
     end.
 
--spec get_stability(feature_name() | feature_props()) -> stability().
+-spec get_stability(feature_name() | feature_props_extended()) -> stability().
 
 get_stability(FeatureName) when is_atom(FeatureName) ->
     case rabbit_ff_registry:get(FeatureName) of
