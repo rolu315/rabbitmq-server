@@ -40,7 +40,6 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include("amqqueue.hrl").
 
--type ra_server_id() :: {Name :: atom(), Node :: node()}.
 -type msg_id() :: non_neg_integer().
 -type qmsg() :: {rabbit_types:r('queue'), pid(), msg_id(), boolean(), rabbit_types:message()}.
 
@@ -60,7 +59,7 @@
 
 %%----------------------------------------------------------------------------
 
--spec init_state(ra_server_id(), rabbit_types:r('queue')) ->
+-spec init_state(amqqueue:ra_server_id(), rabbit_amqqueue:name()) ->
     rabbit_fifo_client:state().
 init_state({Name, _}, QName) ->
     {ok, SoftLimit} = application:get_env(rabbit, quorum_commands_soft_limit),
@@ -73,14 +72,15 @@ init_state({Name, _}, QName) ->
                             fun() -> credit_flow:block(Name), ok end,
                             fun() -> credit_flow:unblock(Name), ok end).
 
--spec handle_event({'ra_event', ra_server_id(), any()}, rabbit_fifo_client:state()) ->
+-spec handle_event({'ra_event', amqqueue:ra_server_id(), any()}, rabbit_fifo_client:state()) ->
                           {'internal', Correlators :: [term()], rabbit_fifo_client:state()} |
                           {rabbit_fifo:client_msg(), rabbit_fifo_client:state()}.
 
 handle_event({ra_event, From, Evt}, QState) ->
     rabbit_fifo_client:handle_ra_event(From, Evt, QState).
 
--spec declare(amqqueue:amqqueue()) -> {'new', amqqueue:amqqueue(), rabbit_fifo_client:state()}.
+-spec declare(amqqueue:amqqueue()) ->
+    {new | existing, amqqueue:amqqueue()} | rabbit_types:channel_exit().
 
 declare(Q) when ?amqqueue_is_quorum(Q) ->
     QName = amqqueue:get_name(Q),
@@ -213,18 +213,18 @@ recover(Queues) ->
              ok ->
                  % queue was restarted, good
                  ok;
-             {error, Err}
-               when Err == not_started orelse
-                    Err == name_not_registered ->
+             {error, Err1}
+               when Err1 == not_started orelse
+                    Err1 == name_not_registered ->
                  % queue was never started on this node
                  % so needs to be started from scratch.
                  Machine = ra_machine(Q0),
                  RaNodes = [{Name, Node} || Node <- Nodes],
                  case ra:start_server(Name, {Name, node()}, Machine, RaNodes) of
                      ok -> ok;
-                     Err ->
+                     Err2 ->
                          rabbit_log:warning("recover: quorum queue ~w could not"
-                                            " be started ~w", [Name, Err]),
+                                            " be started ~w", [Name, Err2]),
                          ok
                  end;
              {error, {already_started, _}} ->
@@ -317,7 +317,9 @@ credit(CTag, Credit, Drain, QState) ->
 -spec basic_get(amqqueue:amqqueue(), NoAck :: boolean(), rabbit_types:ctag(),
                 rabbit_fifo_client:state()) ->
                        {'ok', 'empty', rabbit_fifo_client:state()} |
-                       {'ok', QLen :: non_neg_integer(), qmsg(), rabbit_fifo_client:state()}.
+                       {'ok', QLen :: non_neg_integer(), qmsg(),
+                        rabbit_fifo_client:state()} |
+                       {error, timeout | term()}.
 
 basic_get(Q, NoAck, CTag0, QState0) when ?amqqueue_is_quorum(Q) ->
     QName = amqqueue:get_name(Q),
@@ -335,6 +337,8 @@ basic_get(Q, NoAck, CTag0, QState0) when ?amqqueue_is_quorum(Q) ->
         {ok, {MsgId, {MsgHeader, Msg}}, QState} ->
             IsDelivered = maps:is_key(delivery_count, MsgHeader),
             {ok, quorum_messages(Name), {QName, Id, MsgId, IsDelivered, Msg}, QState};
+        {error, _} = Err ->
+            Err;
         {timeout, _} ->
             {error, timeout}
     end.
@@ -368,7 +372,7 @@ basic_cancel(ConsumerTag, ChPid, OkMsg, QState0) ->
     maybe_send_reply(ChPid, OkMsg),
     rabbit_fifo_client:cancel_checkout(quorum_ctag(ConsumerTag), QState0).
 
--spec stateless_deliver(ra_server_id(), rabbit_types:delivery()) -> 'ok'.
+-spec stateless_deliver(amqqueue:ra_server_id(), rabbit_types:delivery()) -> 'ok'.
 
 stateless_deliver(ServerId, Delivery) ->
     ok = rabbit_fifo_client:untracked_enqueue([ServerId],
@@ -727,6 +731,8 @@ format(Q) when ?is_amqqueue(Q) ->
 
 is_process_alive(Name, Node) ->
     erlang:is_pid(rpc:call(Node, erlang, whereis, [Name])).
+
+-spec quorum_messages(atom()) -> non_neg_integer().
 
 quorum_messages(QName) ->
     case ets:lookup(queue_coarse_metrics, QName) of

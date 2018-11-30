@@ -205,7 +205,7 @@
               state/0,
               config/0]).
 
--spec init(config()) -> {state(), ra_machine:effects()}.
+-spec init(config()) -> state().
 init(#{name := Name} = Conf) ->
     DLH = maps:get(dead_letter_handler, Conf, undefined),
     CCH = maps:get(cancel_consumer_handler, Conf, undefined),
