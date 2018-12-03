@@ -93,7 +93,8 @@
          is_node_compatible/1,
          is_node_compatible/2,
          sync_feature_flags_with_cluster/1,
-         sync_feature_flags_with_cluster/2
+         sync_feature_flags_with_cluster/2,
+         enabled_feature_flags_list_file/0
         ]).
 
 %% Internal use only.
@@ -802,6 +803,7 @@ mark_as_enabled_locally(FeatureName) ->
                     [FeatureName]),
     EnabledFeatureNames = lists:usort(
                             [FeatureName | maps:keys(list(enabled))]),
+    %% FIXME: Handle the error of a failed write!
     write_enabled_feature_flags_list(EnabledFeatureNames),
     initialize_registry(EnabledFeatureNames, []).
 
